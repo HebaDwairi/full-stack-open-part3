@@ -65,33 +65,48 @@ app.get('/api/persons/:id', (request, response) => {
     }
 });
 
-app.delete('/api/persons/:id', (request, response) => {
+app.delete('/api/persons/:id', (request, response, next) => {
     const id = request.params.id;
-    persons = persons.filter(person => person.id !== id);
 
-    response.status(204).end();
+    Person.findByIdAndDelete(id)
+        .then(res => console.log('deleted successfully'))
+        .catch(err => next(err));
+
 });
 
 app.post('/api/persons', (request, response) => {
-    const newPerson = request.body;
+    const body = request.body;
 
-    if(!(newPerson.name && newPerson.number)){
+    if(!(body.name && body.number)){
         return response.status(400).json({
             error: "missing name or number" 
         });
     }
 
-    if(persons.find(person => person.name === newPerson.name)){
-        return response.status(400).json({
-            error: "name must be unique"
-        });
+    const newPerson = new Person({
+        name: body.name,
+        number: body.number
+    });
+
+    newPerson.save()
+        .then(res => {
+            console.log('person was added');
+            response.json(newPerson);
+        })
+        .catch(err => console.log(err));
+});
+
+const errorHandler = (error, request, response, next) => {
+    console.error(error.message);
+
+    if(error.name === 'CastError'){
+        response.status(400).send({error: 'malformatted id'});
     }
 
-    newPerson.id = String(Math.floor(Math.random() * 1000000));
-    persons = persons.concat(newPerson);
+    next(error);
+}
 
-    response.json(newPerson);
-});
+app.use(errorHandler)
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
