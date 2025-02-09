@@ -40,10 +40,10 @@ let persons = [
     }
 ];
 
-app.get('/api/persons', (request, response) => {
+app.get('/api/persons', (request, response, next) => {
     Person.find({}).then(result => {
         response.json(result);
-    })
+    }).catch(err => next(err))
 });
 
 app.get('/info', (request, response) => {
@@ -74,13 +74,13 @@ app.delete('/api/persons/:id', (request, response, next) => {
 
 });
 
-app.post('/api/persons', (request, response) => {
+app.post('/api/persons', (request, response, next) => {
     const body = request.body;
 
     if(!(body.name && body.number)){
-        return response.status(400).json({
-            error: "missing name or number" 
-        });
+        const err = new Error("missing name or number");
+        err.status = 400;
+        return next(err);
     }
 
     const newPerson = new Person({
@@ -102,8 +102,11 @@ const errorHandler = (error, request, response, next) => {
     if(error.name === 'CastError'){
         response.status(400).send({error: 'malformatted id'});
     }
+    if(error.name === 'ValidationError'){
+        response.status(400).send({error: 'missing name or number'});
+    }
 
-    next(error);
+    response.status(error.status || 500).send({error: error.message || 'internal server error'});
 }
 
 app.use(errorHandler)
