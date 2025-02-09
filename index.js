@@ -17,28 +17,6 @@ morgan.token('data', (request, response)=>{
 
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :data'));
 
-let persons = [
-    { 
-      "id": "1",
-      "name": "Arto Hellas", 
-      "number": "040-123456"
-    },
-    { 
-      "id": "2",
-      "name": "Ada Lovelace", 
-      "number": "39-44-5323523"
-    },
-    { 
-      "id": "3",
-      "name": "Dan Abramov", 
-      "number": "12-43-234345"
-    },
-    { 
-      "id": "4",
-      "name": "Mary Poppendieck", 
-      "number": "39-23-6423122"
-    }
-];
 
 app.get('/api/persons', (request, response, next) => {
     Person.find({}).then(result => {
@@ -46,23 +24,30 @@ app.get('/api/persons', (request, response, next) => {
     }).catch(err => next(err))
 });
 
-app.get('/info', (request, response) => {
-    const count = persons.length;
-    const time = new Date();
+app.get('/info', (request, response, next) => {
+    Person.countDocuments({})
+        .then(res => {
+            const count = res;
+            const time = new Date();
 
-    response.send(`Phonebook has info for ${count} people <br/> ${time}`);
+            response.send(`Phonebook has info for ${count} people <br/> ${time}`);
+        })
+        .catch(err => next(err));
 });
 
-app.get('/api/persons/:id', (request, response) => {
+app.get('/api/persons/:id', (request, response, next) => {
     const id = request.params.id;
-    const person = persons.find(person => person.id === id);
-
-    if(person){
-        response.json(person);
-    }
-    else{
-        response.status(404).end();
-    }
+    
+    Person.findById(id)
+        .then(res => {
+            if(res){
+                response.json(res);
+            }
+            else{
+                response.status(404).end();
+            }
+        })
+        .catch(err => next(err));
 });
 
 app.delete('/api/persons/:id', (request, response, next) => {
@@ -93,7 +78,18 @@ app.post('/api/persons', (request, response, next) => {
             console.log('person was added');
             response.json(newPerson);
         })
-        .catch(err => console.log(err));
+        .catch(err => next(err));
+});
+
+app.put('/api/persons/:id', (request, response, next) => {
+    const person = {
+        name: request.body.name,
+        number: request.body.number,
+    }
+
+    Person.findByIdAndUpdate(request.params.id, person, {new: true})
+        .then((res) => response.json(res))
+        .catch(err => next(err));
 });
 
 const errorHandler = (error, request, response, next) => {
