@@ -62,8 +62,8 @@ app.delete('/api/persons/:id', (request, response, next) => {
 app.post('/api/persons', (request, response, next) => {
     const body = request.body;
 
-    if(!(body.name && body.number)){
-        const err = new Error("missing name or number");
+    if(!body.number){
+        const err = new Error('missing number');
         err.status = 400;
         return next(err);
     }
@@ -87,7 +87,7 @@ app.put('/api/persons/:id', (request, response, next) => {
         number: request.body.number,
     }
 
-    Person.findByIdAndUpdate(request.params.id, person, {new: true})
+    Person.findByIdAndUpdate(request.params.id, person, {new: true, runValidators: true})
         .then((res) => response.json(res))
         .catch(err => next(err));
 });
@@ -99,7 +99,7 @@ const errorHandler = (error, request, response, next) => {
         response.status(400).send({error: 'malformatted id'});
     }
     if(error.name === 'ValidationError'){
-        response.status(400).send({error: 'missing name or number'});
+        response.status(400).send({error: error.message});
     }
 
     response.status(error.status || 500).send({error: error.message || 'internal server error'});
