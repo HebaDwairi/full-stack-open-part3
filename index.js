@@ -2,6 +2,18 @@ require('dotenv').config();
 const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
+
+const mongoose = require('mongoose');
+mongoose.set('strictQuery', false);
+
+const url = process.env.MONGODB_URI;
+console.log('connecting to mongodb');
+
+mongoose.connect(url)
+  .then(() => console.log('connected successfully'))
+  .catch(err => console.log('connection failed', err.message));
+
+
 const Person = require('./models/person');
 
 const app = express();
@@ -93,7 +105,7 @@ app.put('/api/persons/:id', (request, response, next) => {
     .catch(err => next(err));
 });
 
-const errorHandler = (error, request, response) => {
+const errorHandler = (error, request, response, next) => {
   console.error(error.message);
 
   if(error.name === 'CastError'){

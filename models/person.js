@@ -1,14 +1,4 @@
 const mongoose = require('mongoose');
-mongoose.set('strictQuery', false);
-
-const url = process.env.MONGODB_URI;
-
-console.log('connecting to mongodb');
-
-mongoose.connect(url)
-  .then(() => console.log('connected successfully'))
-  .catch(err => console.log('connection failed', err.message));
-
 
 const customNumberValidator = (num) => {
   const regex = /(?=.{9,})^\d{2,3}-\d*$/;
