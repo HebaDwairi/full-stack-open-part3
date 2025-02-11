@@ -11,104 +11,104 @@ app.use(cors());
 app.use(express.json());
 
 
-morgan.token('data', (request, response)=>{
-    return JSON.stringify(request.body);
+morgan.token('data', (request) => {
+  return JSON.stringify(request.body);
 });
 
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :data'));
 
 
 app.get('/api/persons', (request, response, next) => {
-    Person.find({}).then(result => {
-        response.json(result);
-    }).catch(err => next(err))
+  Person.find({}).then(result => {
+    response.json(result);
+  }).catch(err => next(err))
 });
 
 app.get('/info', (request, response, next) => {
-    Person.countDocuments({})
-        .then(res => {
-            const count = res;
-            const time = new Date();
+  Person.countDocuments({})
+    .then(res => {
+      const count = res;
+      const time = new Date();
 
-            response.send(`Phonebook has info for ${count} people <br/> ${time}`);
-        })
-        .catch(err => next(err));
+      response.send(`Phonebook has info for ${count} people <br/> ${time}`);
+    })
+    .catch(err => next(err));
 });
 
 app.get('/api/persons/:id', (request, response, next) => {
-    const id = request.params.id;
-    
-    Person.findById(id)
-        .then(res => {
-            if(res){
-                response.json(res);
-            }
-            else{
-                response.status(404).end();
-            }
-        })
-        .catch(err => next(err));
+  const id = request.params.id;
+
+  Person.findById(id)
+    .then(res => {
+      if(res){
+        response.json(res);
+      }
+      else{
+        response.status(404).end();
+      }
+    })
+    .catch(err => next(err));
 });
 
 app.delete('/api/persons/:id', (request, response, next) => {
-    const id = request.params.id;
+  const id = request.params.id;
 
-    Person.findByIdAndDelete(id)
-        .then(res => response.status(204).end())
-        .catch(err => next(err));
+  Person.findByIdAndDelete(id)
+    .then(() => response.status(204).end())
+    .catch(err => next(err));
 
 });
 
 
 app.post('/api/persons', (request, response, next) => {
-    const body = request.body;
+  const body = request.body;
 
-    if(!body.number){
-        const err = new Error('missing number');
-        err.status = 400;
-        return next(err);
-    }
+  if(!body.number){
+    const err = new Error('missing number');
+    err.status = 400;
+    return next(err);
+  }
 
-    const newPerson = new Person({
-        name: body.name,
-        number: body.number
-    });
+  const newPerson = new Person({
+    name: body.name,
+    number: body.number
+  });
 
-    newPerson.save()
-        .then(res => {
-            console.log('person was added');
-            response.json(newPerson);
-        })
-        .catch(err => next(err));
+  newPerson.save()
+    .then(() => {
+      console.log('person was added');
+      response.json(newPerson);
+    })
+    .catch(err => next(err));
 });
 
 app.put('/api/persons/:id', (request, response, next) => {
-    const person = {
-        name: request.body.name,
-        number: request.body.number,
-    }
+  const person = {
+    name: request.body.name,
+    number: request.body.number,
+  }
 
-    Person.findByIdAndUpdate(request.params.id, person, {new: true, runValidators: true})
-        .then((res) => response.json(res))
-        .catch(err => next(err));
+  Person.findByIdAndUpdate(request.params.id, person, { new: true, runValidators: true })
+    .then((res) => response.json(res))
+    .catch(err => next(err));
 });
 
-const errorHandler = (error, request, response, next) => {
-    console.error(error.message);
+const errorHandler = (error, request, response) => {
+  console.error(error.message);
 
-    if(error.name === 'CastError'){
-        response.status(400).send({error: 'malformatted id'});
-    }
-    if(error.name === 'ValidationError'){
-        response.status(400).send({error: error.message});
-    }
+  if(error.name === 'CastError'){
+    response.status(400).send({ error: 'malformatted id' });
+  }
+  if(error.name === 'ValidationError'){
+    response.status(400).send({ error: error.message });
+  }
 
-    response.status(error.status || 500).send({error: error.message || 'internal server error'});
+  response.status(error.status || 500).send({ error: error.message || 'internal server error' });
 }
 
 app.use(errorHandler)
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-    console.log(`server running on port ${PORT}`);
+  console.log(`server running on port ${PORT}`);
 });
